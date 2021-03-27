@@ -18,7 +18,8 @@
 	<script type="text/javascript">
 
 	var map = L.map('map').setView([-3.0308, 24.060096], 5);
-	var grades = onGetGrades(onGetingMaxValToProperty(), 8);
+	var minn = onGetingMinValToProperty();
+	var grades = onGetGrades(onGetingMinValToProperty(),onGetingMaxValToProperty(), 8);
 
 	L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
 		maxZoom: 18,
@@ -41,9 +42,9 @@
 	};
 
 	info.update = function (props) {
-		this._div.innerHTML = '<h4>DRC GeoJson Data</h4>' +  (props ?
-			'<b>' + props.NOM + '</b><br /> note suported people / mi<sup>2</sup>'
-			: 'Hover over a state');
+		this._div.innerHTML = '<h4>DRC GeoJson Data | <strong> Données 2015 </strong></h4>' +  (props 
+			? '<br> Province : <b>' + props.NOM + '</b><br/><br>Chef-lieu : <b>'+ props.PRINCIPALTOWN +'</b><br><br>Habitants : <b>'+ props.POPULATION + '</b> <br /><br> Surface : <b>' + props.AREA +' / km<sup>2</sup> '
+			: ' Parcourer une province pour les informations ');
 	};
 
 	info.addTo(map);
@@ -59,27 +60,47 @@
 		})
 		return max;
 	}
-	function getColor(d) {
-		console.log(grades);
-		
-		return d > 1000 ? '#800026' :
-				d > 500  ? '#BD0026' :
-				d > 200  ? '#E31A1C' :
-				d > 100  ? '#FC4E2A' :
-				d > 50   ? '#FD8D3C' :
-				d > 20   ? '#FEB24C' :
-				d > 10   ? '#FED976' :
-							'#FFEDA0';
-	}
-	function onGetGrades(val, lth){
+	function onGetingMinValToProperty(){
+		var arr = [];
+		statesData.features.forEach(item => {
+			let prt = item.properties;
+			(prt.hasOwnProperty('POPULATION') ? arr.push(prt.POPULATION) : 1945);
+		});
 
+		var min = arr.reduce(function(a,b) {
+			return Math.min(a, b);
+		})
+		return min;
+	}
+	function getColor(d) {
+		d = d && !isNaN(d) ? d : 0;
+		// console.log(d)
+		grades.sort(function(a, b){return b-a});
+		const tabColor = ['#800026', '#BD0026', '#E31A1C', '#FC4E2A', '#FD8D3C', '#FEB24C' , '#FED976', '#FFEDA0'];
+		// console.log(d)
+		for(let i = 0; i < grades.length; i++){
+			if(d >= grades[i]) {
+				if(tabColor[i]) {
+				  return tabColor[i];
+				} else { 
+				//   console.log(minn);
+				//   console.log(d);
+				  return tabColor[tabColor.length - 1];
+				}
+			}
+		}
+	}
+	function onGetGrades(min,val, lth){
+		
 		let L = (lth && !isNaN(lth)) ? lth : 5; 
+		// L = L - 1;
 		let tabGrads = []; 
 		let M = val / L ?? 0.0001; 
-
+		tabGrads.push(min);
+		// console.log(L)
 		for(let k = 0; k < L; k++){
 
-		let earlierval = (tabGrads.length > 0 ) ? tabGrads[k -1] : 0;
+		let earlierval = (tabGrads.length > 0 ) ? tabGrads[tabGrads.length - 1] : 0;
 		let nextval = (earlierval + M);
 		if(nextval < val) tabGrads.push(Math.ceil(nextval));
 		else{ tabGrads.push(Math.ceil(val)); break; }
@@ -93,7 +114,7 @@
 			weight: 2,
 			opacity: 1,
 			color: 'white',
-			dashArray: '3',
+			dashArray: '1',
 			fillOpacity: 0.7,
 			fillColor: getColor(feature.properties.POPULATION)
 		};
@@ -153,7 +174,7 @@
 
 			labels.push(
 				'<i style="background:' + getColor(from + 1) + '"></i> ' +
-				from + (to ? '&ndash;' + to : '+'));
+				from + (to ? '&nbsp; &ndash; &nbsp;' + to : '+'));
 		}
 
 		div.innerHTML = labels.join('<br>');
