@@ -167,16 +167,17 @@
 		var div = L.DomUtil.create('div', 'info legend'),
 			labels = [],
 			from, to;
-
+		labels.push('<b> Population : RDC par province</b>');
+		labels.push('<b> Données publiées en 2015</b><br>');
 		for (var i = 0; i < grades.length; i++) {
 			from = grades[i];
 			to = grades[i + 1];
 
 			labels.push(
-				'<i style="background:' + getColor(from + 1) + '"></i> ' +
-				from + (to ? '&nbsp; &ndash; &nbsp;' + to : '+'));
+					'<i style="background:' + getColor(from + 1) + '"></i> ' +
+					from + (to ? '&nbsp; &ndash; &nbsp;' + to : '+')
+				);
 		}
-
 		div.innerHTML = labels.join('<br>');
 		return div;
 	};
